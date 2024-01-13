@@ -126,9 +126,12 @@ def collegeStats(playerurl, playername, draftclass, college):
      pretty_print(ex, list(map(str, stats)))
      return stats
 
+def progressionStats(playerurl0):
+    stats.append(soup.findAll('table')[0].tfoot.findAll('tr')[0].find('td', {'data-stat': 'games'}).text)
+                     
 def highSchoolStats():
     return
-def overseasstats():
+def overseasstats(internaturl, draftyear):
     return
 
 def pretty_print(a, b):
