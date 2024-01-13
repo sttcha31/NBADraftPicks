@@ -154,7 +154,7 @@ def progressionAndPeakStats(playerurl):
                 else:
                     if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) > worstv2:
                         worsev2 = current
-    else: print("error")             
+                        
 def highSchoolStats():
     return
 def overseasstats(internaturl, draftyear):
