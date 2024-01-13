@@ -94,7 +94,7 @@ def collegeStats(playerurl, playername, draftclass, college):
         #College FT%
         stats.append(soup.findAll('table')[0].tfoot.findAll('tr')[0].find('td', {'data-stat': 'ft_pct'}).text)
         #College ceGF
-        stats.append(soup.findAll('table')[3].tfoot.findAll('tr')[0].find('td', {'data-stat': 'efg_pct'}).text)
+        stats.append(soup.find('table', {"id": "players_advanced"}).tfoot.findAll('tr')[0].find('td', {'data-stat': 'efg_pct'}).text)
         #College ORB
         stats.append(soup.findAll('table')[0].tfoot.findAll('tr')[0].find('td', {'data-stat': 'orb_per_g'}).text)
         #College DRB
@@ -126,9 +126,35 @@ def collegeStats(playerurl, playername, draftclass, college):
      pretty_print(ex, list(map(str, stats)))
      return stats
 
-def progressionStats(playerurl0):
-    stats.append(soup.findAll('table')[0].tfoot.findAll('tr')[0].find('td', {'data-stat': 'games'}).text)
-                     
+def progressionAndPeakStats(playerurl):
+    stats = []
+    metrics =["games", "games_started", "mp_per_g", "fg_per_g", "fga_per_g", "fg_pct", "fg2_per_g", "fg2a_per_g", "fg2_pct", "fg3_per_g", "fg3a_per_g", "fg3_pct", "ft_per_g", "fta_per_g", "ft_pct", "orb_per_g", "drb_per_g", "trb_per_g", "ast_per_g", "stl_per_g", "blk_per_g", "tov_per_g", "pf_per_g", "pts_per_g", "sos" ]
+    response = requests.get(playerurl)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        #best
+        for metric in metrics:
+            best = 0
+            bestv2 = 100
+            for year in range(len(soup.findAll('table')[0].tbody.findAll('tr'))):
+                if metric != "tov_per_g" and metric != "pf_per_g":
+                    if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) > best:
+                        best = current
+                else:
+                   if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) < bestv2:
+                        bestv2 = current    
+        #worst
+        for metric in metrics:
+            worst = 100 
+            worstv2 = 0
+            for year in range(len(soup.findAll('table')[0].tbody.findAll('tr'))):
+                if metric != "tov_per_g" and metric != "pf_per_g":
+                    if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) < worst:
+                        worst = current
+                else:
+                    if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) > worstv2:
+                        worsev2 = current
+    else: print("error")             
 def highSchoolStats():
     return
 def overseasstats(internaturl, draftyear):
@@ -143,6 +169,6 @@ def performanceIndexCalculator(playerurl):
 # draftClassIteration("2003")
 
 # collegeStats("https://www.sports-reference.com/cbb/players/chris-bosh-1.html?utm_medium=sr_xsite&utm_source=bbr&utm_campaign=2023_02_tbl_player_college_stats&utm_content=lnk_mcbb&utm_id=boshch01", "Chris Bosh", "2003", "Georgia Tech")
-# collegeStats("https://www.sports-reference.com/cbb/players/stephen-curry-1.html", "Steph Curry", "9", "Davidson")
+collegeStats("https://www.sports-reference.com/cbb/players/stephen-curry-1.html", "Steph Curry", "2009", "Davidson")
 
-secondary_link("https://www.basketball-reference.com/players/a/anthoca01.html", True)
+# secondar{y_link("https://www.basketball-reference.com/players/a/anthoca01.html", True)
