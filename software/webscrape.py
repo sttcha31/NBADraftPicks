@@ -104,6 +104,46 @@ stattemplate = {
 }
 
 ex = ["Name","YearDrafted","College","YearsInCollege", "Conference", "HomeCity", "HomeState", "Position", "Height(cm)", "Weight(kg)", "cG", "cGS", "cMP", "cFG", "cFGA", "cFG%", "c2P", "c2PA", "c2P%", "c3P", "c3PA", "c3P%","cFT","cFTA","cFT%","ceFG%","cORB","cDRB","cTRB","cAST","cSTL","cBLK","cTOB","cPF","cPTS","cSOS","cWS","PI"]
+def main():
+    nbadrafts = {
+        "2003": "https://www.basketball-reference.com/draft/NBA_2003.html",
+        "2004": "https://www.basketball-reference.com/draft/NBA_2004.html",
+        "2005": "https://www.basketball-reference.com/draft/NBA_2005.html",
+        "2006": "https://www.basketball-reference.com/draft/NBA_2006.html",
+        "2007": "https://www.basketball-reference.com/draft/NBA_2007.html",
+        "2008": "https://www.basketball-reference.com/draft/NBA_2008.html",
+        "2009": "https://www.basketball-reference.com/draft/NBA_2009.html",
+        "2010": "https://www.basketball-reference.com/draft/NBA_2010.html",
+        "2011": "https://www.basketball-reference.com/draft/NBA_2011.html",
+        "2012": "https://www.basketball-reference.com/draft/NBA_2012.html",
+        "2013": "https://www.basketball-reference.com/draft/NBA_2013.html",
+        "2014": "https://www.basketball-reference.com/draft/NBA_2014.html",
+        "2015": "https://www.basketball-reference.com/draft/NBA_2015.html",
+        "2016": "https://www.basketball-reference.com/draft/NBA_2016.html",
+        "2017": "https://www.basketball-reference.com/draft/NBA_2017.html",
+        "2018": "https://www.basketball-reference.com/draft/NBA_2018.html",
+        "2019": "https://www.basketball-reference.com/draft/NBA_2019.html",
+        "2020": "https://www.basketball-reference.com/draft/NBA_2020.html",
+        "2021": "https://www.basketball-reference.com/draft/NBA_2021.html",
+    }
+    data = []
+    for year in range(2003, 2021+1):
+        response = requests.get(nbadrafts[str(year)])
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+            for index in range(0,62):
+                if index not in (30,31):
+                    nbaLink = "https://www.basketball-reference.com"+soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a["href"]
+                    playerName = soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a.text
+                    if soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"] != "Zzz":
+                        collegeName = soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"]
+                        collegeLink = secondary_link(nbaLink, True)
+                        data.append(collegeStats(collegeLink,playerName,str(year),collegeName))
+                    else:
+                        preNbaLink = ""
+        else:
+            print("error")
+
 
 def draftClassIteration(draftclass):
     url = "https://www.basketball-reference.com/draft/NBA_"+ draftclass + ".html"
@@ -134,9 +174,6 @@ def collegeStats(playerurl, playername, draftclass, college):
      response = requests.get(playerurl)
      if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
-        #playerjake
-        #yeardrafted
-        #college
         #yearsInCollege
         stats["YearDrafted"] = len(soup.findAll('table')[0].tbody.findAll('tr'))
         #conference
@@ -291,11 +328,24 @@ def pretty_printv2(dict):
         print("{:<{}}   {}".format(item1, max_width, item2))
 
 def performanceIndexCalculator(playerurl):
-    stats = {}
+    nbastats = {
+        "Career Length": "",
+    }
 # draftClassIteration("2003")
 
 # collegeStats("https://www.sports-reference.com/cbb/players/chris-bosh-1.html?utm_medium=sr_xsite&utm_source=bbr&utm_campaign=2023_02_tbl_player_college_stats&utm_content=lnk_mcbb&utm_id=boshch01", "Chris Bosh", "2003", "Georgia Tech")
-collegeStats("https://www.sports-reference.com/cbb/players/stephen-curry-1.html", "Steph Curry", "2009", "Davidson")
+# collegeStats("https://www.sports-reference.com/cbb/players/stephen-curry-1.html", "Steph Curry", "2009", "Davidson")
 
 # secondar{y_link("https://www.basketball-reference.com/players/a/anthoca01.html", True)
 
+# print(secondary_link("https://www.basketball-reference.com/players/w/wadedw01.html", True))
+
+response = requests.get("https://www.basketball-reference.com/draft/NBA_2003.html")
+if response.status_code == 200:
+    soup = BeautifulSoup(response.text, "html.parser")
+    for index in range(0,62):
+        if index not in (30,31):
+            print(soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"}))
+            if soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"] != "Zzz":
+                print("here")
+            print(soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a.text)
