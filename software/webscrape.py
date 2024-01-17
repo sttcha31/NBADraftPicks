@@ -140,7 +140,11 @@ def main():
                         collegeLink = secondary_link(nbaLink, True)
                         data.append(collegeStats(collegeLink,playerName,str(year),collegeName))
                     else:
-                        preNbaLink = ""
+                        preNbaLink = secondary_link(nbaLink, False)
+                        if "gleague" in preNbaLink:
+                            data.append(gleagueStats(preNbaLink, playerName,str(year)))
+                        else:
+                            return
         else:
             print("error")
 
@@ -164,7 +168,8 @@ def secondary_link(playerurl, boolean):
         if boolean:
             return(soup.find("div", {"id": "all_college_stats_sh"}).find("div", {"class": "section_heading_text"}).ul.findAll("li")[0].a.get('href')) 
         else:
-            return None
+            print(soup.find("div", {"id": "bottom_nav_container"}).findAll("ul"))
+            return(soup.find("div", {"id": "bottom_nav_container"}).findAll("ul")[len(soup.find("div", {"id": "bottom_nav_container"}).findAll("ul"))-1].find("li").a.get('href'))
     else:
         print("error")
 
@@ -263,6 +268,8 @@ def collegeStats(playerurl, playername, draftclass, college):
      pretty_printv2(stats)
      return stats
 
+def gleagueStats(playerurl, playername, draftclass):
+    return
 def progressionAndPeakStats(playerurl, stats):
     maxstats = ["cGmax", "cGSmax", "cMPmax", "cFGmax", "cFGAmax", "cFG%max", "c2Pmax", "c2PAmax", "c2P%max", "c3Pmax", "c3PAmax", "c3P%max", "cFTmax", "cFTAmax", "cFT%max", "cORBmax", "cDRBmax", "cTRBmax", "cASTmax", "cSTLmax", "cBLKmax", "cTOBmax", "cPFmax", "cPTSmax", "cSOSmax"]
     minstats = ["cGmin", "cGSmin", "cMPmin", "cFGmin", "cFGAmin", "cFG%min", "c2Pmin", "c2PAmin", "c2P%min", "c3Pmin", "c3PAmin", "c3P%min", "cFTmin", "cFTAmin", "cFT%min", "cORBmin", "cDRBmin", "cTRBmin", "cASTmin", "cSTLmin", "cBLKmin", "cTOBmin", "cPFmin", "cPTSmin", "cSOSmin"]
@@ -329,7 +336,54 @@ def pretty_printv2(dict):
 
 def performanceIndexCalculator(playerurl):
     nbastats = {
-        "Career Length": "",
+        "Seasons": "",
+        "G":"",
+        "GS":"",
+        "MP":"",
+        "FG":"",
+        "FGA":"",
+        "FG%":"",
+        "3P":"",
+        "3PA":"",
+        "3P%":"",
+        "2P":"",
+        "2PA":"",
+        "2P%":"",
+        "eFG%":"",
+        "FT":"",
+        "FTA": "",
+        "FT%":"",
+        "ORB":"",
+        "DRB":"",
+        "TRB":"",
+        "AST":"",
+        "STL":"",
+        "BLK":"",
+        "TOV":"",
+        "PF":"",
+        "PTS":"",
+        "PER":"",
+        "TS%":"",
+        "3PAr":"",
+        "FTr": "",
+        "ORB%": "",
+        "DRB%": "",
+        "TRB%": "",
+        "AST%":"",
+        "STL%": "",
+        "BLK%":"",
+        "TOV%":"",
+        "USG%":"",
+        "OWS":"",
+        "DWS":"",
+        "WS": "",
+        "WS/48":"",
+        "OBRM":"",
+        "DBPM":"",
+        "BPM":"",
+        "VORP":"",
+        
+
     }
 # draftClassIteration("2003")
 
@@ -340,12 +394,14 @@ def performanceIndexCalculator(playerurl):
 
 # print(secondary_link("https://www.basketball-reference.com/players/w/wadedw01.html", True))
 
-response = requests.get("https://www.basketball-reference.com/draft/NBA_2003.html")
-if response.status_code == 200:
-    soup = BeautifulSoup(response.text, "html.parser")
-    for index in range(0,62):
-        if index not in (30,31):
-            print(soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"}))
-            if soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"] != "Zzz":
-                print("here")
-            print(soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a.text)
+# response = requests.get("https://www.basketball-reference.com/draft/NBA_2003.html")
+# if response.status_code == 200:
+#     soup = BeautifulSoup(response.text, "html.parser")
+#     for index in range(0,62):
+#         if index not in (30,31):
+#             print(soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"}))
+#             if soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"] != "Zzz":
+#                 print("here")
+#             print(soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a.text)
+
+print(secondary_link("https://www.basketball-reference.com/players/g/greenja05.html", False))
