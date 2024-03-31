@@ -388,7 +388,8 @@ def performanceIndexCalculator(playerurl):
 # draftClassIteration("2003")
 
 # collegeStats("https://www.sports-reference.com/cbb/players/chris-bosh-1.html?utm_medium=sr_xsite&utm_source=bbr&utm_campaign=2023_02_tbl_player_college_stats&utm_content=lnk_mcbb&utm_id=boshch01", "Chris Bosh", "2003", "Georgia Tech")
-# collegeStats("https://www.sports-reference.com/cbb/players/stephen-curry-1.html", "Steph Curry", "2009", "Davidson")
+collegeStats("https://www.sports-reference.com/cbb/players/stephen-curry-1.html", "Steph Curry", "2009", "Davidson")
+
 
 # secondar{y_link("https://www.basketball-reference.com/players/a/anthoca01.html", True)
 
@@ -404,4 +405,4 @@ def performanceIndexCalculator(playerurl):
 #                 print("here")
 #             print(soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a.text)
 
-print(secondary_link("https://www.basketball-reference.com/players/g/greenja05.html", False))
+# print(secondary_link("https://www.basketball-reference.com/players/g/greenja05.html", False))
