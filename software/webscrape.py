@@ -1,7 +1,9 @@
 import selenium
 from bs4 import BeautifulSoup
 import requests
+import re
 import random
+import csv
 #https://web1.ncaa.org/stats/StatsSrv/careersearch
 #https://www.kaggle.com/datasets/benwieland/nba-draft-data
 #https://www.sports-reference.com/cbb/players/kevin-durant-1.html
@@ -42,7 +44,7 @@ stattemplate = {
     "cAST": "",
     "cSTL": "",
     "cBLK": "",
-    "cTOB": "",
+    "cTOV": "",
     "cPF": "",
     "cPTS": "",
     "cSOS": "",
@@ -71,7 +73,7 @@ stattemplate = {
     "cASTmax": "",
     "cSTLmax": "",
     "cBLKmax": "",
-    "cTOBmax": "",
+    "cTOVmax": "",
     "cPFmax": "",
     "cPTSmax": "",
     "cSOSmax": "",
@@ -97,13 +99,13 @@ stattemplate = {
     "cASTmin": "",
     "cSTLmin": "",
     "cBLKmin": "",
-    "cTOBmin": "",
+    "cTOVmin": "",
     "cPFmin": "",
     "cPTSmin": "",
     "cSOSmin": "",
 }
 
-ex = ["Name","YearDrafted","College","YearsInCollege", "Conference", "HomeCity", "HomeState", "Position", "Height(cm)", "Weight(kg)", "cG", "cGS", "cMP", "cFG", "cFGA", "cFG%", "c2P", "c2PA", "c2P%", "c3P", "c3PA", "c3P%","cFT","cFTA","cFT%","ceFG%","cORB","cDRB","cTRB","cAST","cSTL","cBLK","cTOB","cPF","cPTS","cSOS","cWS","PI"]
+ex = ["Name","YearDrafted","College","YearsInCollege", "Conference", "HomeCity", "HomeState", "Position", "Height(cm)", "Weight(kg)", "cG", "cGS", "cMP", "cFG", "cFGA", "cFG%", "c2P", "c2PA", "c2P%", "c3P", "c3PA", "c3P%","cFT","cFTA","cFT%","ceFG%","cORB","cDRB","cTRB","cAST","cSTL","cBLK","cTOV","cPF","cPTS","cSOS","cWS","PI"]
 def main():
     nbadrafts = {
         "2003": "https://www.basketball-reference.com/draft/NBA_2003.html",
@@ -127,26 +129,34 @@ def main():
         "2021": "https://www.basketball-reference.com/draft/NBA_2021.html",
     }
     data = []
-    for year in range(2003, 2021+1):
-        response = requests.get(nbadrafts[str(year)])
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, "html.parser")
-            for index in range(0,62):
-                if index not in (30,31):
-                    nbaLink = "https://www.basketball-reference.com"+soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a["href"]
-                    playerName = soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a.text
-                    if soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"] != "Zzz":
-                        collegeName = soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"]
-                        collegeLink = secondary_link(nbaLink, True)
-                        data.append(collegeStats(collegeLink,playerName,str(year),collegeName))
-                    else:
-                        preNbaLink = secondary_link(nbaLink, False)
-                        if "gleague" in preNbaLink:
-                            data.append(gleagueStats(preNbaLink, playerName,str(year)))
-                        else:
-                            return
-        else:
-            print("error")
+    with open(r"data\train.csv", 'a', newline='') as file:
+        for year in range(2003, 2021+1):
+            response = requests.get(nbadrafts[str(year)])
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, "html.parser")
+                for index in range(0,62):
+                    if index not in (29,30):
+                        nbaLink = "https://www.basketball-reference.com"+soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a["href"]
+                        playerName = soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "player"}).a.text
+                        if soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"] != "Zzz":
+                            collegeName = soup.find("table", {"id": "stats"}).tbody.findAll("tr")[index].find("td", {"data-stat": "college_name"})["csk"]
+                            try:
+                                collegeLink = secondary_link(nbaLink, True)
+                                # data.append(collegeStats(collegeLink,playerName,str(year),collegeName))
+                                stat = collegeStats(collegeLink,playerName,str(year),collegeName)
+                                writer = csv.DictWriter(file, fieldnames=stat.keys())
+                                writer.writerow(stat)
+                            except:
+                                print("")
+
+                        # else:
+                        #     preNbaLink = secondary_link(nbaLink, False)
+                        #     if "gleague" in preNbaLink:
+                        #         data.append(gleagueStats(preNbaLink, playerName,str(year)))
+                        #     else:
+                        #         return
+            else:
+                print("error")
 
 
 def draftClassIteration(draftclass):
@@ -174,27 +184,33 @@ def secondary_link(playerurl, boolean):
         print("error")
 
 def collegeStats(playerurl, playername, draftclass, college):
-    #  stats = [playername, draftclass, college]
      stats = stattemplate
+     stats["Name"] = playername
+     stats["YearDrafted"] = draftclass
+     stats["College"] = college
      response = requests.get(playerurl)
      if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         #yearsInCollege
-        stats["YearDrafted"] = len(soup.findAll('table')[0].tbody.findAll('tr'))
+        stats["YearsInCollege"] = len(soup.findAll('table')[0].tbody.findAll('tr'))
         #conference
         stats["Conference"] = soup.findAll('table')[0].tbody.findAll('tr')[0].find('td', {'data-stat': 'conf_abbr'}).text
         #HomeCity
-        hometown = soup.findAll('p')[2].text
-        init = hometown.index(" ") + 1
-        sep = hometown.index(",")
-        end = hometown.index("\n", sep)
-        stats["HomeCity"] =  hometown[init:sep]
-        #HomeState
-        stats["HomeState"] = hometown[sep+2:end] 
+        try:
+            hometown = soup.find('strong', string='Hometown:').parent.text
+            init = hometown.index(" ") + 1
+            sep = hometown.index(",")
+            end = hometown.index("\n", sep) 
+            stats["HomeCity"] =  hometown[init:sep]
+            #HomeState
+            stats["HomeState"] = hometown[sep+2:end] 
+        except:
+            stats["HomeCity"] = ""
+            stats["HomeState"] = ""
         #Position
-        if "Forward" in soup.findAll('p')[0].text: stats["Position"] = "Foward"
-        if "Guard" in soup.findAll('p')[0].text: stats["Position"] = "Guard"
-        if "Center" in soup.findAll('p')[0].text: stats["Position"] =  "Center"
+        if "Forward" in soup.find('strong', string=re.compile('Position:')).parent.text: stats["Position"] = "Foward"
+        if "Guard" in soup.find('strong', string=re.compile('Position:')).parent.text: stats["Position"] = "Guard"
+        if "Center" in soup.find('strong', string=re.compile('Position:')).parent.text: stats["Position"] =  "Center"
         #Height
         physique = soup.findAll('p')[1].text
         hs = physique.index("(")+1
@@ -260,19 +276,21 @@ def collegeStats(playerurl, playername, draftclass, college):
         # thing = soup.find('div', {'class': 'stats_pullout'})
         stats["cWS"] = soup.find('div', {'class': 'stats_pullout'}).find('div', {'class': 'p3'}).findAll('p')[1].text
         # College PI
-        stats["cPI"] = "tbd"
+        stats["PI"] = "tbd"
+        stats = progressionAndPeakStats(playerurl, stats)
+        pretty_printv2(stats)
+        return stats
      else:
-        print('error')
-    #  ex = ["Name","YearDrafted","College","YearsInCollege", "Conference", "HomeCity", "HomeState", "Position", "Height(cm)", "Weight(kg)", "cG", "cGS", "cMP", "cFG", "cFGA", "cFG%", "c2P", "c2PA", "c2P%", "c3P", "c3PA", "c3P%","cFT","cFTA","cFT%","ceFG%","cORB","cDRB","cTRB","cAST","cSTL","cBLK","cTOB","cPF","cPTS","cSOS","cWS","PI"]
-     stats = progressionAndPeakStats(playerurl, stats)
-     pretty_printv2(stats)
-     return stats
+        print(response.status_code)
+        return stats
+    #  ex = ["Name","YearDrafted","College","YearsInCollege", "Conference", "HomeCity", "HomeState", "Position", "Height(cm)", "Weight(kg)", "cG", "cGS", "cMP", "cFG", "cFGA", "cFG%", "c2P", "c2PA", "c2P%", "c3P", "c3PA", "c3P%","cFT","cFTA","cFT%","ceFG%","cORB","cDRB","cTRB","cAST","cSTL","cBLK","cTOV","cPF","cPTS","cSOS","cWS","PI"]
+     
 
 def gleagueStats(playerurl, playername, draftclass):
     return
 def progressionAndPeakStats(playerurl, stats):
-    maxstats = ["cGmax", "cGSmax", "cMPmax", "cFGmax", "cFGAmax", "cFG%max", "c2Pmax", "c2PAmax", "c2P%max", "c3Pmax", "c3PAmax", "c3P%max", "cFTmax", "cFTAmax", "cFT%max", "cORBmax", "cDRBmax", "cTRBmax", "cASTmax", "cSTLmax", "cBLKmax", "cTOBmax", "cPFmax", "cPTSmax", "cSOSmax"]
-    minstats = ["cGmin", "cGSmin", "cMPmin", "cFGmin", "cFGAmin", "cFG%min", "c2Pmin", "c2PAmin", "c2P%min", "c3Pmin", "c3PAmin", "c3P%min", "cFTmin", "cFTAmin", "cFT%min", "cORBmin", "cDRBmin", "cTRBmin", "cASTmin", "cSTLmin", "cBLKmin", "cTOBmin", "cPFmin", "cPTSmin", "cSOSmin"]
+    maxstats = ["cGmax", "cGSmax", "cMPmax", "cFGmax", "cFGAmax", "cFG%max", "c2Pmax", "c2PAmax", "c2P%max", "c3Pmax", "c3PAmax", "c3P%max", "cFTmax", "cFTAmax", "cFT%max", "cORBmax", "cDRBmax", "cTRBmax", "cASTmax", "cSTLmax", "cBLKmax", "cTOVmax", "cPFmax", "cPTSmax", "cSOSmax"]
+    minstats = ["cGmin", "cGSmin", "cMPmin", "cFGmin", "cFGAmin", "cFG%min", "c2Pmin", "c2PAmin", "c2P%min", "c3Pmin", "c3PAmin", "c3P%min", "cFTmin", "cFTAmin", "cFT%min", "cORBmin", "cDRBmin", "cTRBmin", "cASTmin", "cSTLmin", "cBLKmin", "cTOVmin", "cPFmin", "cPTSmin", "cSOSmin"]
     metrics =  ["games", "games_started", "mp_per_g", "fg_per_g", "fga_per_g", "fg_pct", "fg2_per_g", "fg2a_per_g", "fg2_pct", "fg3_per_g", "fg3a_per_g", "fg3_pct", "ft_per_g", "fta_per_g", "ft_pct", "orb_per_g", "drb_per_g", "trb_per_g", "ast_per_g", "stl_per_g", "blk_per_g", "tov_per_g", "pf_per_g", "pts_per_g", "sos" ]
     response = requests.get(playerurl)
     if response.status_code == 200:
@@ -283,11 +301,17 @@ def progressionAndPeakStats(playerurl, stats):
             bestv2 = 100
             for year in range(len(soup.findAll('table')[0].tbody.findAll('tr'))):
                 if metric != "tov_per_g" and metric != "pf_per_g":
-                    if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) > best:
-                        best = current
+                    try:
+                        if (current:=float(emptyStatCheck(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text))) > best:
+                            best = current
+                    except:
+                        best = best
                 else:
-                   if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) < bestv2:
-                        bestv2 = current 
+                    try:
+                        if (current:=float(emptyStatCheck(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text))) < bestv2:
+                            bestv2 = current 
+                    except:
+                        bestv2 = bestv2
             if metric != "tov_per_g" and metric != "pf_per_g":
                 stats[maxstats[metrics.index(metric)]] = best
             else:
@@ -298,11 +322,17 @@ def progressionAndPeakStats(playerurl, stats):
             worstv2 = 0
             for year in range(len(soup.findAll('table')[0].tbody.findAll('tr'))):
                 if metric != "tov_per_g" and metric != "pf_per_g":
-                    if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) < worst:
-                        worst = current
+                    try:
+                        if (current:=float(emptyStatCheck(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text))) < worst:
+                            worst = current
+                    except:
+                        worst = worst
                 else:
-                    if (current:=float(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text)) > worstv2:
-                        worstv2 = current
+                    try:
+                        if (current:=float(emptyStatCheck(soup.findAll('table')[0].tbody.findAll('tr')[year].find("td", {"data-stat": metric}).text))) > worstv2:
+                            worstv2 = current
+                    except:
+                        worstv2 = worstv2
             if metric != "tov_per_g" and metric != "pf_per_g":
                 stats[minstats[metrics.index(metric)]] = worst
             else:
@@ -318,7 +348,12 @@ def progressionAndPeakStats(playerurl, stats):
         stats["ceFG%min"] = worst
 
     return stats              
-                        
+def emptyStatCheck(value):
+    if value == "":
+        return 0
+    else:
+        return value
+
 def highSchoolStats():
     return
 def overseasstats(internaturl, draftyear):
@@ -388,9 +423,11 @@ def performanceIndexCalculator(playerurl):
 # draftClassIteration("2003")
 
 # collegeStats("https://www.sports-reference.com/cbb/players/chris-bosh-1.html?utm_medium=sr_xsite&utm_source=bbr&utm_campaign=2023_02_tbl_player_college_stats&utm_content=lnk_mcbb&utm_id=boshch01", "Chris Bosh", "2003", "Georgia Tech")
-collegeStats("https://www.sports-reference.com/cbb/players/stephen-curry-1.html", "Steph Curry", "2009", "Davidson")
-
-
+thing = collegeStats("https://www.sports-reference.com/cbb/players/carmelo-anthony-1.html", "Steph Curry", "2009", "Davidson")
+with open(r"data\train.csv", 'w', newline='') as file:
+    writer = csv.DictWriter(file, fieldnames=thing.keys())
+    writer.writeheader()
+main()
 # secondar{y_link("https://www.basketball-reference.com/players/a/anthoca01.html", True)
 
 # print(secondary_link("https://www.basketball-reference.com/players/w/wadedw01.html", True))
